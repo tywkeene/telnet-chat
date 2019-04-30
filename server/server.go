@@ -28,6 +28,7 @@ These commands are available while you are in a room:
 /quit: disconnect from the server
 `
 
+// Return a stringified list of rooms
 func (s *Server) ListRooms() string {
 	str := "Available rooms:\n"
 	for i, room := range s.Rooms {
@@ -36,6 +37,8 @@ func (s *Server) ListRooms() string {
 	return str
 }
 
+// Allow the user to select a room, sets the connection's index to the index of
+// the room in the server struct's list of rooms
 func (s *Server) SelectRoom(c *connection.Connection) error {
 	roomList := s.ListRooms()
 	if err := c.SendMessage("Select a room to join by its number\n"); err != nil {
@@ -66,6 +69,7 @@ func (s *Server) SelectRoom(c *connection.Connection) error {
 	return nil
 }
 
+// Handle various user commands. Only available when in a room
 func (s *Server) HandleCommands(message string, c *connection.Connection) bool {
 	switch message {
 	case "/help":
@@ -80,7 +84,7 @@ func (s *Server) HandleCommands(message string, c *connection.Connection) bool {
 			return true
 		}
 		log.Printf("User %s changed name to %s\n", c.String(), newName)
-		s.Rooms[c.Room].WriteChan <- fmt.Sprintf("User %s changed name to %s\n", c.UserName, newName)
+		s.Rooms[c.Room].WriteMessage(fmt.Sprintf("User %s changed name to %s\n", c.UserName, newName))
 		c.UserName = newName
 
 		return true
@@ -96,6 +100,7 @@ func (s *Server) HandleCommands(message string, c *connection.Connection) bool {
 	return false
 }
 
+// Handle user messages to a room as well as commands. Exits when the user disconnects
 func (s *Server) HandleMessages(c *connection.Connection) {
 	for c.Open == true {
 		text, err := c.SendWithResponse(">> ")
@@ -122,6 +127,7 @@ func (s *Server) HandleMessages(c *connection.Connection) {
 	}
 }
 
+// Initialize the connection object and start a go routine to handle messaging with the client
 func (s *Server) HandleConnection(c *connection.Connection) {
 	username, err := c.SendWithResponse("Desired username: ")
 	if err != nil || username == "" {
@@ -141,6 +147,7 @@ func (s *Server) HandleConnection(c *connection.Connection) {
 	go s.HandleMessages(c)
 }
 
+// Start the server's room go-routines, start the tcp listener and handle incoming connections
 func (s *Server) Serve() {
 
 	for _, room := range s.Rooms {
@@ -160,6 +167,7 @@ func (s *Server) Serve() {
 	}
 }
 
+// Initialize the rooms in a server
 func (s *Server) InitializeRooms() {
 	for _, roomName := range config.Config.Rooms {
 		log.Printf("Initializing room %q\n", roomName)
@@ -171,6 +179,7 @@ func (s *Server) InitializeRooms() {
 	}
 }
 
+// Initiaize a new server with setttings read from the configuration file
 func NewServer() (*Server, error) {
 
 	bindAddr := config.Config.BindAddr + ":" + config.Config.BindPort

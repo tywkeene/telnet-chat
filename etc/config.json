@@ -1,6 +1,6 @@
 {
-	"bind_addr": "0.0.0.0",
-	"bind_port": "11000",
-	"log_file": "chat.log",
+    "bind_addr": "0.0.0.0",
+    "bind_port": "11000",
+    "log_file": "chat.log",
     "rooms": ["General chat", "Announcements", "Golang"]
 }

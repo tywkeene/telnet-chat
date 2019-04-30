@@ -16,10 +16,12 @@ type Room struct {
 	WriteChan   chan string
 }
 
+// Write a message to the room's channel
 func (r *Room) WriteMessage(message string) {
 	r.WriteChan <- message
 }
 
+// Remove the user's connection from the room's connection list
 func (r *Room) RemoveUser(c *connection.Connection) {
 	r.Lock()
 	log.Printf("Removing user %s from room %s\n", c.UserName, r.Name)
@@ -28,6 +30,7 @@ func (r *Room) RemoveUser(c *connection.Connection) {
 	r.Unlock()
 }
 
+// Add a user to the room's connection list
 func (r *Room) AddUser(c *connection.Connection) {
 	r.Lock()
 	log.Printf("Adding user %s to room %s\n", c.String(), r.Name)
@@ -39,6 +42,8 @@ func (r *Room) AddUser(c *connection.Connection) {
 	r.Unlock()
 }
 
+// Listen to the WriteChan, writing messages written to the channel to all clients in the channel
+// Don't send the message to the user that sent it
 func (r *Room) Run() {
 	for {
 		message := <-r.WriteChan
