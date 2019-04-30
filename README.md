@@ -9,8 +9,11 @@ To build, simply run the provided script: `./build.sh`
 To run, edit the config values in `etc/config.json` including
 
 `bind_addr` String. Address to bind the TCP listener to
+
 `bind_port` String. Port to bind the TCP listener to
+
 `log_file` String. Path to a file to log messages
+
 `rooms` String array. List of room names to create upon server initialization
 
 
