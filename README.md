@@ -6,7 +6,7 @@ Telnet-Chat server is a simple chat server, accessible with a telnet client
 
 To build, simply run the provided script: `./build.sh`
 
-To run, edit the config values in `etc/config.json` including
+To run, edit the config values in `etc/config.json` including:
 
 `bind_addr` String. Address to bind the TCP listener to
 
