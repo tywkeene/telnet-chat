@@ -21,6 +21,14 @@ type Server struct {
 	LogFile     *os.File
 }
 
+var helpMessage string = `
+These commands are available while you are in a room:
+/help: print this help message
+/name: change your username
+/leave: leave the current room and choose another
+/quit: disconnect from the server
+`
+
 func (s *Server) ListRooms() string {
 	str := "Available rooms:\n"
 	for i, room := range s.Rooms {
@@ -31,7 +39,7 @@ func (s *Server) ListRooms() string {
 
 func (s *Server) SelectRoom(c *connection.Connection) error {
 	roomList := s.ListRooms()
-	if err := c.SendMessage("Select a room to join\n"); err != nil {
+	if err := c.SendMessage("Select a room to join by its number\n"); err != nil {
 		return fmt.Errorf("Failed to send message to %q (%s): %s",
 			c.UserName, c.Conn.RemoteAddr(), err.Error())
 	}
@@ -56,8 +64,37 @@ func (s *Server) SelectRoom(c *connection.Connection) error {
 	s.Rooms[roomIndex].AddUser(c)
 	c.Room = roomIndex
 
-	go s.HandleMessages(c)
 	return nil
+}
+
+func (s *Server) HandleCommands(message string, c *connection.Connection) bool {
+	switch message {
+	case "/help":
+		if err := c.SendMessage(helpMessage); err != nil {
+			log.Println(err)
+			return true
+		}
+	case "/name":
+		newName, err := c.SendWithResponse("New name: ")
+		if err != nil {
+			log.Println(err)
+			return true
+		}
+		log.Printf("User %s changed name to %s\n", c.String(), newName)
+		s.Rooms[c.Room].WriteChan <- fmt.Sprintf("User %s changed name to %s\n", c.UserName, newName)
+		c.UserName = newName
+
+		return true
+	case "/leave":
+		room := s.Rooms[c.Room]
+		room.RemoveUser(c)
+		s.SelectRoom(c)
+		return true
+	case "/quit":
+		c.Close()
+		return true
+	}
+	return false
 }
 
 func (s *Server) HandleMessages(c *connection.Connection) {
@@ -66,6 +103,10 @@ func (s *Server) HandleMessages(c *connection.Connection) {
 		if err != nil {
 			log.Printf("Failed to read message from %s: %s", c.String(), err.Error())
 			return
+		}
+
+		if s.HandleCommands(text, c) == true {
+			continue
 		}
 
 		message := fmt.Sprintf("<%s> (%s): %s\n", time.Now().Format(time.Kitchen), c.UserName, text)
@@ -100,6 +141,7 @@ func (s *Server) HandleConnection(c *connection.Connection) {
 		c.Close()
 		return
 	}
+	go s.HandleMessages(c)
 }
 
 func (s *Server) Serve() {
@@ -126,7 +168,7 @@ func (s *Server) InitializeRooms() {
 		log.Printf("Initializing room %q\n", roomName)
 		s.Rooms = append(s.Rooms, &room.Room{
 			Name:        roomName,
-			Connections: make([]*connection.Connection, 0),
+			Connections: make(map[string]*connection.Connection, 0),
 			WriteChan:   make(chan string),
 		})
 	}
