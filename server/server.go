@@ -98,7 +98,7 @@ func (s *Server) HandleCommands(message string, c *connection.Connection) bool {
 }
 
 func (s *Server) HandleMessages(c *connection.Connection) {
-	for {
+	for c.Open == true {
 		text, err := c.SendWithResponse(">> ")
 		if err != nil {
 			log.Printf("Failed to read message from %s: %s", c.String(), err.Error())
@@ -111,7 +111,7 @@ func (s *Server) HandleMessages(c *connection.Connection) {
 
 		message := fmt.Sprintf("<%s> (%s): %s\n", time.Now().Format(time.Kitchen), c.UserName, text)
 		room := s.Rooms[c.Room]
-		room.WriteChan <- message
+		room.WriteMessage(message)
 
 		logStr := fmt.Sprintf("%s: %s", room.Name, message)
 		_, err = s.LogFile.WriteString(logStr)

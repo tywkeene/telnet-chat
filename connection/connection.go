@@ -15,6 +15,7 @@ type Connection struct {
 	Buffer   *bufio.Reader
 	UserName string
 	Room     int
+	Open     bool
 }
 
 func (c *Connection) String() string {
@@ -22,7 +23,9 @@ func (c *Connection) String() string {
 }
 
 func (c *Connection) Close() {
+	log.Printf("User %s disconnected\n", c.String())
 	c.SendMessage("Goodbye!\n")
+	c.Open = false
 	c.Conn.Close()
 }
 
@@ -66,5 +69,6 @@ func NewConnection(conn net.Conn) *Connection {
 	return &Connection{
 		Conn:   conn,
 		Buffer: bufio.NewReader(conn),
+		Open:   true,
 	}
 }
