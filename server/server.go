@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"time"
 
@@ -17,6 +18,7 @@ type Server struct {
 	Connections []*connection.Connection
 	Listener    net.Listener
 	Rooms       []*room.Room
+	LogFile     *os.File
 }
 
 func (s *Server) ListRooms() string {
@@ -69,6 +71,13 @@ func (s *Server) HandleMessages(c *connection.Connection) {
 		message := fmt.Sprintf("<%s> (%s): %s\n", time.Now().Format(time.Kitchen), c.UserName, text)
 		room := s.Rooms[c.Room]
 		room.WriteChan <- message
+
+		logStr := fmt.Sprintf("%s: %s", room.Name, message)
+		_, err = s.LogFile.WriteString(logStr)
+		if err != nil {
+			log.Printf("Failed to log message from user %s: %s", c.String(), err.Error())
+		}
+
 		log.Printf("User %s sent message %q to room %q\n", c.String(), text, room.Name)
 	}
 }
@@ -133,11 +142,18 @@ func NewServer() (*Server, error) {
 		return nil, err
 	}
 
+	log.Printf("Opening message log file %q\n", config.Config.LogFile)
+	f, err := os.OpenFile(config.Config.LogFile, os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		return nil, err
+	}
+
 	s := &Server{
 		Running:     true,
 		Connections: make([]*connection.Connection, 0),
 		Listener:    listener,
 		Rooms:       make([]*room.Room, 0),
+		LogFile:     f,
 	}
 
 	s.InitializeRooms()
