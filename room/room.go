@@ -16,6 +16,10 @@ type Room struct {
 	WriteChan   chan string
 }
 
+func (r *Room) WriteMessage(message string) {
+	r.WriteChan <- message
+}
+
 func (r *Room) RemoveUser(c *connection.Connection) {
 	r.Lock()
 	log.Printf("Removing user %s from room %s\n", c.UserName, r.Name)
@@ -30,7 +34,7 @@ func (r *Room) AddUser(c *connection.Connection) {
 	r.Connections[c.UserName] = c
 	r.WriteChan <- fmt.Sprintf("<%s> User %s joined.\n", r.Name, c.UserName)
 
-	welcomeMessage := fmt.Sprintf("Welcome to %q!\n", r.Name)
+	welcomeMessage := fmt.Sprintf("Welcome to %q!\nType /help to display the help message\n", r.Name)
 	c.SendMessage(welcomeMessage)
 	r.Unlock()
 }
