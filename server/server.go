@@ -14,11 +14,10 @@ import (
 )
 
 type Server struct {
-	Running     bool
-	Connections []*connection.Connection
-	Listener    net.Listener
-	Rooms       []*room.Room
-	LogFile     *os.File
+	Running  bool
+	Listener net.Listener
+	Rooms    []*room.Room
+	LogFile  *os.File
 }
 
 var helpMessage string = `
@@ -134,8 +133,6 @@ func (s *Server) HandleConnection(c *connection.Connection) {
 	c.UserName = username
 	log.Printf("User %s connected\n", c.String())
 
-	s.Connections = append(s.Connections, c)
-
 	if err := s.SelectRoom(c); err != nil {
 		log.Println(err)
 		c.Close()
@@ -191,11 +188,10 @@ func NewServer() (*Server, error) {
 	}
 
 	s := &Server{
-		Running:     true,
-		Connections: make([]*connection.Connection, 0),
-		Listener:    listener,
-		Rooms:       make([]*room.Room, 0),
-		LogFile:     f,
+		Running:  true,
+		Listener: listener,
+		Rooms:    make([]*room.Room, 0),
+		LogFile:  f,
 	}
 
 	s.InitializeRooms()
