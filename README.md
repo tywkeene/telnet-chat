@@ -4,6 +4,8 @@ Telnet-Chat server is a simple chat server, accessible with a telnet client
 
 # Building & running
 
+Before building, run ` go mod init main` and `go mod tidy`
+
 To build, simply run the provided script: `./build.sh`
 
 To run, edit the config values in `etc/config.json` including:
